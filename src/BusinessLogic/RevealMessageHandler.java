@@ -13,4 +13,10 @@ public class RevealMessageHandler implements IRevealMessageHandler
 		return null;
 	}
 
+	@Override
+	public byte[] ConstructRevealMessage() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

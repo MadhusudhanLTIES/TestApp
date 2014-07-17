@@ -1,12 +1,15 @@
 package Communication;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import BusinessLogic.*;
 import Common.Constants;
 import DTO.Appliance;
+import DTO.State;
 import Interface.IArrayentBackEndCommunication;
 
 public class ArrayentBackEndCommunication  extends TimerTask implements IArrayentBackEndCommunication
@@ -20,8 +23,9 @@ public class ArrayentBackEndCommunication  extends TimerTask implements IArrayen
 	
 	TimerTask _timerTask;
 	Timer _timer;
-	
 	Date _startTime;
+	
+	List<State> _states;
 
 	//Default Constructor
 	public ArrayentBackEndCommunication()
@@ -31,6 +35,7 @@ public class ArrayentBackEndCommunication  extends TimerTask implements IArrayen
 	
 	public ArrayentBackEndCommunication(Appliance app)
 	{
+		this._states = new ArrayList<State>();
 		this._applInstance=app;
 		_constantobj = new Constants();
 		_arrayentclientConnector= new Arrayent();
@@ -93,11 +98,13 @@ public class ArrayentBackEndCommunication  extends TimerTask implements IArrayen
 	}
 
 	@Override
-	public Boolean StartCycle(int periodInMinutes)
+	public Boolean StartCycle()
 	{
 		// TODO Auto-generated method stub
 		_startTime = new Date();
-		_duration = periodInMinutes;
+		
+		_timer.scheduleAtFixedRate(_timerTask, new Date(),_constantobj.HEARTBEAT_INTERVAL);
+		
 		return null;
 	}
 
@@ -114,14 +121,24 @@ public class ArrayentBackEndCommunication  extends TimerTask implements IArrayen
 	}
 
 	@Override
-	public void run() {
+	public void run() 
+	{
 		// TODO Auto-generated method stub
-		
-		if(new Date().getTime()-_startTime.getTime()<= _duration *60 *1000)
+		if(this._states.size()>0)
 		{
-			
+			if(new Date().getTime()-_startTime.getTime()<= _duration *60 *1000)
+			{
+				//_arrayentclientConnector.SendData();
+			}
+			else
+				_timer.cancel();
 		}
-		else
-			_timer.cancel();
+	}
+
+	@Override
+	public Boolean AddStates(List<State> states) {
+		// TODO Auto-generated method stub
+		this._states.addAll(states);
+		return true;
 	}
 }

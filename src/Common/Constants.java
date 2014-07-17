@@ -19,5 +19,8 @@ public class Constants
 	public final byte REVEAL_DATETIME = (byte)0xE8;
 	public final byte REVEAL_RESET_ECM = (byte)0xE9;
 	
+	public final byte SOURCE_NODE=0x06;
+	public final byte DESTINATION_NODE=0x0F;
+	
 	public final int HEARTBEAT_INTERVAL= 10000;
 }

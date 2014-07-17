@@ -1,9 +1,11 @@
 package BusinessLogic;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import Common.Constants;
 import Common.GlobalStructures;
 import DTO.RevealationMessage;
 import DTO.RevealationMessageEventObject;
@@ -13,6 +15,8 @@ import Interface.IRevealationMessageHandler;
 public class RevealationMessageHandler implements IRevealationMessageHandler
 {
 	IRevealMessageHandler _revealMessageHandler;
+	short _transId;
+	Constants _constObj;
 	
 	 public synchronized void SubscribeMessageHandler( IRevealMessageHandler msgHandler ) 
 	 {
@@ -27,6 +31,7 @@ public class RevealationMessageHandler implements IRevealationMessageHandler
 	
 	public RevealationMessageHandler() {
 		// TODO Auto-generated constructor stub
+		_constObj= new Constants();
 	}
 	
 	//public byte[] HandleRevealMessage(byte[] data)
@@ -289,5 +294,70 @@ public class RevealationMessageHandler implements IRevealationMessageHandler
 		//payLoad.flip();
 		
 		return GlobalStructures.ObjectToByteArray(payLoad);
+	}
+
+	@Override
+	public byte[] ConstructRevealationMessage(byte[] revealData,byte revealationApi,byte revealationOpcode)
+	{
+		// TODO Auto-generated method stub
+		switch (revealationApi)
+		{
+			case (byte)0XE6: return ConstructRevealMessage(revealData,revealationApi,revealationOpcode);
+				
+			default:
+				break;
+		}
+		return null;
+	}
+	
+	private byte[] ConstructRevealMessage(byte[] revealData,byte revealationApi, byte revealationOpcode)
+	{
+		switch (revealationOpcode)
+		{
+			case 0x01:
+				
+				break;
+			case 0x21:
+				break;
+			
+			case 0x22: return PublishRevealData(revealData, revealationApi, revealationOpcode);
+				
+			default:
+				break;
+		}
+		
+		return null;
+	}
+	
+	private byte[] PublishRevealData(byte[] revealData , byte revealationApi,byte revealationOpcode)
+	{
+		List<Byte> resultData = new ArrayList<Byte>();
+		
+		//Add reveal payload
+		Collections.addAll(resultData,GlobalStructures.ByteArrayToObject(revealData));
+		
+		//Add Destination
+		resultData.add(0,_constObj.DESTINATION_NODE);
+		
+		//Add Source 
+		resultData.add(0,_constObj.SOURCE_NODE);
+		
+		//Add SequenceID
+		resultData.addAll(0,Arrays.asList(GlobalStructures.ShortToByteArray(_transId)));
+		
+		//Add Opcode
+		resultData.add(0,revealationOpcode);
+		
+		//Add Api
+		resultData.add(0,revealationApi);
+		
+		//Add Length
+		resultData.addAll(0,Arrays.asList(GlobalStructures.ShortToByteArray((short)resultData.size())));
+		
+		//Add Header
+		resultData.add(0,(byte)0xED);
+		
+		
+		return GlobalStructures.ObjectToByteArray(resultData);
 	}
 }
