@@ -22,5 +22,5 @@ public class Constants
 	public final byte SOURCE_NODE=0x06;
 	public final byte DESTINATION_NODE=0x0F;
 	
-	public final int HEARTBEAT_INTERVAL= 10000;
+	public final int HEARTBEAT_INTERVAL= 10;
 }

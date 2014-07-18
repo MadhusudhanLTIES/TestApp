@@ -132,6 +132,7 @@ public class Appliance
 			this.set_password(password);
 			this.set_connectionId(id);
 			this.set_isApplianceInitialized(false);
+			this.set_isCycleStarted(false);
 			this.set_tcpListenPort(portNumber);
 	}
 

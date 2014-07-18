@@ -5,14 +5,18 @@ import java.util.Date;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import BusinessLogic.*;
 import Common.Constants;
 import DTO.Appliance;
 import DTO.State;
 import Interface.IArrayentBackEndCommunication;
+import Interface.IRevealationMessageHandler;
 
-public class ArrayentBackEndCommunication  extends TimerTask implements IArrayentBackEndCommunication
+public class ArrayentBackEndCommunication implements IArrayentBackEndCommunication
 {
 	public Appliance _applInstance;
 	
@@ -21,12 +25,19 @@ public class ArrayentBackEndCommunication  extends TimerTask implements IArrayen
 	Arrayent _arrayentclientConnector;
 	int _duration;
 	
-	TimerTask _timerTask;
-	Timer _timer;
+	
 	Date _startTime;
 	
 	List<State> _states;
-
+	
+	State _currentState;
+	
+	IRevealationMessageHandler _revealationMessageHandler;
+	
+	ScheduledExecutorService _executor;
+	
+	Runnable _task;
+	
 	//Default Constructor
 	public ArrayentBackEndCommunication()
 	{
@@ -39,10 +50,17 @@ public class ArrayentBackEndCommunication  extends TimerTask implements IArrayen
 		this._applInstance=app;
 		_constantobj = new Constants();
 		_arrayentclientConnector= new Arrayent();
-		_arrayentclientConnector.SubscribeMessageHandler(new RevealationMessageHandler());
-		
-		_timerTask = new ArrayentBackEndCommunication();
-		_timer = new Timer(true);
+		_revealationMessageHandler= new RevealationMessageHandler();
+		_arrayentclientConnector.SubscribeMessageHandler(_revealationMessageHandler);
+		_executor= Executors.newSingleThreadScheduledExecutor();
+		_task = new Runnable() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				RunTasks();
+			}
+		};
 		
 	}
 	
@@ -101,9 +119,9 @@ public class ArrayentBackEndCommunication  extends TimerTask implements IArrayen
 	public Boolean StartCycle()
 	{
 		// TODO Auto-generated method stub
-		_startTime = new Date();
 		
-		_timer.scheduleAtFixedRate(_timerTask, new Date(),_constantobj.HEARTBEAT_INTERVAL);
+		
+		_executor.scheduleAtFixedRate(_task, 0, _constantobj.HEARTBEAT_INTERVAL,TimeUnit.SECONDS);
 		
 		return null;
 	}
@@ -120,18 +138,39 @@ public class ArrayentBackEndCommunication  extends TimerTask implements IArrayen
 		return null;
 	}
 
-	@Override
-	public void run() 
+	
+	private void RunTasks() 
 	{
 		// TODO Auto-generated method stub
-		if(this._states.size()>0)
+		try
 		{
-			if(new Date().getTime()-_startTime.getTime()<= _duration *60 *1000)
+			//System.out.println("In Run Tasks " + new Date().toString());
+			if(this._states!=null && this._states.size()>0)
 			{
-				//_arrayentclientConnector.SendData();
+				//System.out.println("Total no of states " + this._states.size());
+				if(_currentState==null)
+				{
+					_currentState = this._states.remove(0);
+					_startTime = new Date();
+				}
+				if(new Date().getTime()-_startTime.getTime()<= _duration *5 *1000)
+					{
+						//System.out.println("Start Time If + " + _startTime.toString());
+						System.out.println(_currentState.get_stateName() +"Running");
+						_arrayentclientConnector.SendMessage(_revealationMessageHandler.ConstructRevealationMessage(_currentState.get_wideData(), _currentState.get_revealationApi(), _currentState.get_revealationOpcode()));
+					}
+					else
+					{
+						_currentState = this._states.remove(0);
+						_duration=_currentState.get_duration();
+						_startTime= new Date();
+						//System.out.println("Start Time Else + " + _startTime.toString());
+					}
 			}
-			else
-				_timer.cancel();
+		}
+		catch(Exception exp)
+		{
+			exp.printStackTrace();
 		}
 	}
 

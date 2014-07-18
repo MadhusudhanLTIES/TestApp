@@ -11,9 +11,9 @@ import java.util.List;
 
 import javax.jws.WebService;
 
-
 import Communication.ArrayentBackEndCommunication;
 import DTO.Appliance;
+import DTO.State;
 import DataAccessLayer.QueryHandler;
 import Interface.IExecutionEngine;
 
@@ -24,6 +24,7 @@ public class ExecutionEngine implements IExecutionEngine
 	int portNumber=8055;
 	QueryHandler _queryHandler;
 	
+	List<State> _states;
 	
 	public Boolean CreateAnAppliance(String said)
 	{
@@ -60,21 +61,47 @@ public class ExecutionEngine implements IExecutionEngine
 		{
 			if(app._applInstance.get_said()== said)
 			{
-				if(app._applInstance.get_isApplianceInitialized()&& !app._applInstance.get_isCycleStarted())
+				try
+				{
+				if(app._applInstance.get_isApplianceInitialized() && !app._applInstance.get_isCycleStarted())
 				{
 					app._applInstance.set_isCycleStarted(true);
-					break;
+					
+					app.AddStates(_states);
+					app.StartCycle();
+					return true;
+				}
+				}
+				catch(Exception exp)
+				{
+					exp.printStackTrace();
 				}
 			}
 		}
 		
-		return null;
+		return false;
 	}
 
 	@Override
 	public Boolean StopApplianceCycle(String said) {
 		// TODO Auto-generated method stub
-		return null;
+		for (ArrayentBackEndCommunication app : _applainces) 
+		{
+			if(app._applInstance.get_said()== said)
+			{
+				if(app._applInstance.get_isApplianceInitialized()&& app._applInstance.get_isCycleStarted())
+				{
+					app._applInstance.set_isCycleStarted(false);
+					
+					_states.clear();
+					
+					app.StopCycle();
+					return true;
+				}
+			}
+		}
+		
+		return false;
 	}
 	
 	@Override
@@ -125,13 +152,23 @@ public class ExecutionEngine implements IExecutionEngine
 		}
 	}
 	
+	@Override
+	public Boolean AddState(int id, String stateName, byte api, byte opcode,
+			byte[] payLoad, int duration) {
+		_states.add(new State(api, opcode, payLoad, duration, stateName, id));
+		return true;
+	}
+	
 	
 	public ExecutionEngine()
 	{
 		_applainces= new ArrayList<ArrayentBackEndCommunication>();
 		_queryHandler= QueryHandler.GetQueryHandlerObject();
 		_queryHandler.InitializeConnection("test");
+		_states= new ArrayList<State>();
 	}
+
+	
 
 
 

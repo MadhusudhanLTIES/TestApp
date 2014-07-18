@@ -1,7 +1,5 @@
 package Interface;
 
-import java.io.InputStream;
-
 import javax.jws.WebMethod;
 
 public interface IExecutionEngine
@@ -26,4 +24,7 @@ public interface IExecutionEngine
 	
 	@WebMethod(operationName="RemoveAppliance")
 	public Boolean RemoveAppliance(String said);
+	
+	//Later on these interfaces shall be added as web method's
+	public Boolean AddState(int id, String stateName, byte api, byte opcode,byte[] payLoad,int duration);
 }
